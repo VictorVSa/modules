@@ -1,0 +1,48 @@
+{:default
+ {:require-restart? true
+  :actions
+  {:assets [["assets/src/datomic.clj" "src/clj/<<sanitized>>/datomic.clj"]]
+   :injections
+   [{:action :merge
+     :path "resources/system.edn"
+     :target []
+     :type :edn
+     :value
+     {:db.datomic/transactor
+      #profile
+      {:dev  {:datomic-path #or [#env DATOMIC_PATH ""]
+              :command
+              #or [#env DATOMIC_TRANSACTOR_COMMAND
+                   "bin/transactor"]
+              :args
+              #or [#env DATOMIC_TRANSACTOR_ARGS
+                   "-Ddatomic.printConnectionInfo=true,config/dev-transactor-template.properties"]
+              :delay #or [#env DATOMIC_WAIT_DELAY 4000]}
+       :test {:datomic-path #or [#env DATOMIC_PATH ""]
+              :command
+              #or [#env DATOMIC_TRANSACTOR_COMMAND
+                   "bin/transactor"]
+              :args
+              #or [#env DATOMIC_TRANSACTOR_ARGS
+                   "-Ddatomic.printConnectionInfo=true,config/dev-transactor-template.properties"]
+              :delay #or [#env DATOMIC_WAIT_DELAY 4000]}}
+
+      :db.datomic/conn
+      #profile
+      {:dev  {:transactor #ig/ref :db.datomic/transactor
+              :db-uri     #or [#env DATOMIC_DB_URI "datomic:dev://localhost:4334/<<name>>"]}
+       :test {:transactor #ig/ref :db.datomic/transactor
+              :db-uri     #or [#env DATOMIC_DB_URI_TEST
+                               "datomic:dev://localhost:4334/<<name>>_test"]}
+       :prod {:db-uri #env DATOMIC_DB_URI}}}}
+
+    {:action :merge
+     :path   "deps.edn"
+     :target [:deps]
+     :type   :edn
+     :value  {com.datomic/peer {:mvn/version "1.0.7075"}}}
+
+    {:action :append-requires
+     :path   "src/clj/<<sanitized>>/core.clj"
+     :type   :clj
+     :value  ["[<<ns-name>>.datomic]"]}]}}}
